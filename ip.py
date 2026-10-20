@@ -45,9 +45,8 @@ class IP:
             cabecalho[10:12] = struct.pack('!H', calc_checksum(bytes(cabecalho)))
             datagrama = bytes(cabecalho) + datagrama[4 * ihl:total_len]
 
+            # Encaminha sempre ao enlace; se nenhuma rota casar, next_hop é None
             next_hop = self._next_hop(dst_addr)
-            if next_hop is None:
-                return
             self.enlace.enviar(datagrama, next_hop)
 
     # ===================== PASSOS 1 e 3: tabela de encaminhamento =====================
@@ -118,16 +117,12 @@ class IP:
         (string no formato x.y.z.w).
         """
         next_hop = self._next_hop(dest_addr)
-        if next_hop is None:
-            return
         datagrama = self._montar_datagrama(segmento, dest_addr, IPPROTO_TCP)
         self.enlace.enviar(datagrama, next_hop)
 
     # ===================== PASSO 5: ICMP Time exceeded =====================
     def _enviar_time_exceeded(self, datagrama_original, dest_addr):
         next_hop = self._next_hop(dest_addr)
-        if next_hop is None:
-            return
         ihl = datagrama_original[0] & 0xf
         # Corpo do ICMP: cabeçalho IP original + 8 primeiros bytes do payload original
         corpo = datagrama_original[:4 * ihl + 8]
